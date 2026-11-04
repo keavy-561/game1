@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>花语远征 · Bloom Tale</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 背景装饰层 -->
+<div id="bg-deco" aria-hidden="true"></div>
+
+<!-- ===== 标题屏 ===== -->
+<div id="screen-title" class="screen">
+  <div class="title-card">
+    <div class="title-logo" id="title-logo"></div>
+    <h1 class="game-title">花语远征</h1>
+    <p class="game-sub">Bloom Tale · 三消远征</p>
+    <div class="title-rules">
+      <div class="rule-chip"><span class="rule-ic" data-ic="swap"></span><label>交换相邻棋子</label></div>
+      <div class="rule-chip"><span class="rule-ic" data-ic="match"></span><label>三连即可消除</label></div>
+      <div class="rule-chip"><span class="rule-ic" data-ic="attack"></span><label>消除即是攻击</label></div>
+    </div>
+    <button class="btn btn-primary btn-big" id="btn-start">开始探索</button>
+    <div class="title-foot">
+      <button class="btn btn-ghost" id="btn-map-from-title">关卡一览</button>
+      <button class="btn btn-ghost" id="btn-save-io">存档迁移</button>
+      <button class="btn btn-icon" id="btn-sound-title" title="音效"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 关卡选择屏 ===== -->
+<div id="screen-map" class="screen hidden">
+  <div class="map-head">
+    <button class="btn btn-icon" id="btn-back-title"></button>
+    <h2>远征地图</h2>
+    <button class="btn btn-icon" id="btn-sound-map" title="音效"></button>
+  </div>
+  <div class="map-scroll" id="map-scroll"></div>
+</div>
+
+<!-- ===== 战斗屏 ===== -->
+<div id="screen-battle" class="screen hidden">
+  <!-- 顶部 HUD：暂停 / 关卡名 / 剩余步数 -->
+  <div class="hud">
+    <button class="btn btn-icon" id="btn-pause" title="暂停"></button>
+    <div class="hud-level">
+      <span class="hud-chapter" id="hud-chapter">花语草原</span>
+      <span class="hud-num"><span id="hud-level">第 1 关</span><span class="wave-chip hidden" id="wave-chip">1/1 波</span></span>
+    </div>
+    <div class="hud-moves" id="hud-moves">
+      <span class="moves-num" id="moves-num">20</span>
+      <span class="moves-label">步数</span>
+    </div>
+    <div class="hud-right">
+      <button class="btn btn-icon" id="btn-buffs" title="祝福"></button>
+      <button class="btn btn-icon" id="btn-sound-battle" title="音效"></button>
+    </div>
+  </div>
+
+  <!-- 顶部第二行：当前目标 -->
+  <div class="hud-objective" id="objective-mini"></div>
+
+  <!-- 中上部：怪物区（与棋盘同宽的 7 列网格） -->
+  <div class="monsters" id="monsters"></div>
+
+  <!-- 中部：7×8 消除棋盘 -->
+  <div class="board-wrap" id="board-wrap">
+    <div class="combo-pop hidden" id="combo-pop"></div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- 底部：队伍状态 + 五位英雄 -->
+  <div class="team-strip">
+    <span class="ts-label">队伍</span>
+    <div class="hp-wrap" id="hp-wrap">
+      <div class="hp-fill" id="hp-fill"></div>
+      <div class="hp-text" id="hp-text">110 / 110</div>
+    </div>
+    <div class="shield-chip hidden" id="shield-chip"><span data-ic="shield"></span><b id="shield-num">0</b></div>
+  </div>
+  <div class="heroes" id="heroes"></div>
+
+  <!-- 底部提示行 -->
+  <div class="battle-foot">
+    <button class="btn btn-soft btn-hint" id="btn-hint">提示</button>
+    <div class="battle-tip" id="battle-tip">消除棋子，攻击怪物！</div>
+  </div>
+
+  <!-- 教程引导层 -->
+  <div class="guide-layer hidden" id="guide-layer">
+    <div class="guide-bubble" id="guide-bubble"></div>
+    <div class="guide-hand" id="guide-hand"></div>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：祝福三选一 ===== -->
+<div class="overlay hidden" id="overlay-bless">
+  <div class="panel bless-panel">
+    <h2 class="panel-title">获得祝福</h2>
+    <p class="panel-sub">选择一份力量，伴随你的远征</p>
+    <div class="bless-cards" id="bless-cards"></div>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：结算 ===== -->
+<div class="overlay hidden" id="overlay-result">
+  <div class="panel result-panel">
+    <div class="result-stars" id="result-stars"></div>
+    <h2 class="result-title" id="result-title">探索成功</h2>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-objs" id="result-objs"></div>
+    <div class="result-stats" id="result-stats"></div>
+    <div class="result-btns" id="result-btns"></div>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：怪物详情 ===== -->
+<div class="overlay hidden" id="overlay-monster">
+  <div class="panel monster-panel">
+    <div id="monster-detail"></div>
+    <button class="btn btn-soft" id="btn-monster-close">知道了</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：祝福清单 ===== -->
+<div class="overlay hidden" id="overlay-buffs">
+  <div class="panel buffs-panel">
+    <h2 class="panel-title">远征祝福</h2>
+    <div class="buffs-list" id="buffs-list"></div>
+    <button class="btn btn-soft" id="btn-buffs-close">返回</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：章节过场 ===== -->
+<div class="overlay hidden" id="overlay-chapter">
+  <div class="panel chapter-panel">
+    <div class="chapter-ic" id="chapter-ic"></div>
+    <h2 class="chapter-name" id="chapter-name"></h2>
+    <p class="chapter-sub" id="chapter-sub"></p>
+    <button class="btn btn-primary" id="btn-chapter-go">出发</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：彩虹核心颜色选择 ===== -->
+<div class="overlay hidden" id="overlay-prism">
+  <div class="panel prism-panel">
+    <h2 class="panel-title">彩虹核心</h2>
+    <p class="panel-sub">选择一种颜色，消除全场同色棋子（消耗 1 步）</p>
+    <div class="prism-colors" id="prism-colors"></div>
+    <button class="btn btn-soft" id="btn-prism-cancel">取消</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：战斗暂停 ===== -->
+<div class="overlay hidden" id="overlay-pause">
+  <div class="panel pause-panel">
+    <h2 class="panel-title">战斗暂停</h2>
+    <button class="btn btn-primary" id="btn-resume">继续战斗</button>
+    <button class="btn btn-soft" id="btn-retry">重新挑战</button>
+    <button class="btn btn-soft" id="btn-quit-battle">退出战斗</button>
+    <button class="btn btn-ghost" id="btn-sound-pause">音效：开</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：存档迁移 ===== -->
+<div class="overlay hidden" id="overlay-save">
+  <div class="panel save-panel">
+    <h2 class="panel-title">存档迁移</h2>
+    <p class="panel-sub">换设备 / 换网址时，把远征进度带走</p>
+    <div class="save-section">
+      <div class="save-sec-title">导出进度</div>
+      <textarea id="save-export" readonly spellcheck="false"></textarea>
+      <button class="btn btn-soft" id="btn-save-copy">复制存档码</button>
+    </div>
+    <div class="save-section">
+      <div class="save-sec-title">导入进度</div>
+      <textarea id="save-import" placeholder="粘贴存档码…" spellcheck="false"></textarea>
+      <button class="btn btn-primary" id="btn-save-import">导入存档</button>
+    </div>
+    <button class="btn btn-ghost" id="btn-save-close">关闭</button>
+  </div>
+</div>
+
+<!-- 全局提示 toast -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/svg.js"></script>
+<script src="js/data.js"></script>
+<script src="js/board.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
