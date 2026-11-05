@@ -271,16 +271,71 @@ var DATA = (function () {
       var keys = U.shuffle(rng, OBJ_KEYS.filter(function (k) { return k !== 'fast10' || totalHp < 300; }));
       level.objectives = keys.slice(0, 2);
     }
+
+    /* 封印元素（渐进难度）：被封印的颜色消除后不造成伤害、不积攒能量（见 computeHits / grantEnergy），
+       但照常消耗步数、怪物照常行动。节奏：
+       1-16 无 → 17-19 首尝 1 色 → 20-29 章奇数关 1 色 → 30 起整章 1 色
+       → 30+ 精英关与 46+ 加码 2 色 → 55 起含终焉之王全 2 色（章节 BOSS 关减量照顾） */
+    var sealCount = 0;
+    if (n >= 10 && n <= 19) sealCount = (n >= 17) ? 1 : 0;
+    else if (n >= 20 && n <= 29) sealCount = (n % 2 === 1) ? 1 : 0;
+    else if (n >= 30 && n <= 39) sealCount = (n % 5 === 0 && n % 10 !== 0) ? 2 : 1;
+    else if (n >= 40 && n <= 49) sealCount = (n % 10 !== 0 && (n % 5 === 0 || n >= 46)) ? 2 : 1;
+    else if (n >= 50 && n <= 54) sealCount = 1;
+    else if (n >= 55) sealCount = 2;
+    level.sealed = sealCount > 0 ? U.shuffle(rng, [0, 1, 2, 3, 4]).slice(0, sealCount) : [];
     return level;
   }
 
-  /* ---------- 存档 ---------- */
-  var SAVE_KEY = 'bloom_tale_save_v1';
+  /* ---------- 存档：设备码隔离 + 双键冗余 + 旧档自动迁移 ----------
+     每台设备生成稳定「设备码」；存档同时写入设备码主键与备份键两份；
+     读取时在 主键 / 备份键 / 旧版键 中取最新的有效存档——任何一处损坏都不丢进度，
+     用户不主动「重新开始」就永远接着上一次的进度玩。 */
+  var DEVICE_KEY = 'bloom_tale_device_v1';
+  var LEGACY_KEY = 'bloom_tale_save_v1'; // 旧版单键存档，自动迁移
   var save = null;
+  var deviceCode = null;
+
+  // 设备码：首次用设备特征哈希生成，之后永远复用已存值（浏览器升级也不变）
+  function fingerprintHash() {
+    var s = (navigator.userAgent || '') + '|' + (navigator.language || '') + '|' +
+      (navigator.platform || '') + '|' + (screen.width || 0) + 'x' + (screen.height || 0) +
+      'x' + (screen.colorDepth || 0) + '|' + (navigator.hardwareConcurrency || 0) + '|' +
+      (new Date().getTimezoneOffset() || 0);
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+    var code = (h >>> 0).toString(16).toUpperCase();
+    while (code.length < 6) code = '0' + code;
+    return code.slice(0, 8);
+  }
+  function getDeviceCode() {
+    if (deviceCode) return deviceCode;
+    var stored = U.storage.get(DEVICE_KEY);
+    if (typeof stored === 'string' && /^[0-9A-F]{6,8}$/.test(stored)) {
+      deviceCode = stored;
+    } else {
+      deviceCode = fingerprintHash();
+      U.storage.set(DEVICE_KEY, deviceCode);
+    }
+    return deviceCode;
+  }
+  function saveKey() { return 'bloom_tale_save_' + getDeviceCode(); }
+  function saveKeyBak() { return saveKey() + '_bak'; }
+  function validSave(s) {
+    return !!(s && s.v === 1 && typeof s.unlocked === 'number' && s.unlocked >= 1 && s.unlocked <= 60);
+  }
 
   function loadSave() {
-    save = U.storage.get(SAVE_KEY);
-    if (!save || save.v !== 1) {
+    var cands = [U.storage.get(saveKey()), U.storage.get(saveKeyBak()), U.storage.get(LEGACY_KEY)];
+    var best = null;
+    for (var i = 0; i < cands.length; i++) {
+      var c = cands[i];
+      if (validSave(c) && (!best || (c.savedAt || 0) > (best.savedAt || 0))) best = c;
+    }
+    if (best) {
+      save = best;
+      persist(); // 迁移归位：旧版键 / 备份键恢复的进度落到本设备双键上
+    } else {
       save = { v: 1, unlocked: 1, stars: {}, sound: true, run: null };
       persist();
     }
@@ -288,7 +343,20 @@ var DATA = (function () {
     if (!save.best) save.best = {};
     return save;
   }
-  function persist() { U.storage.set(SAVE_KEY, save); }
+  function persist() {
+    save.savedAt = Date.now();
+    U.storage.set(saveKey(), save);
+    U.storage.set(saveKeyBak(), save); // 双键冗余：任一键损坏互为备份
+  }
+
+  /* 重新开始：唯一清档入口（标题屏「重新开始」确认后调用），其余任何情况都保留进度 */
+  function resetProgress() {
+    var keepSound = save ? save.sound : true;
+    save = { v: 1, unlocked: 1, stars: {}, sound: keepSound, run: null, tips: {}, best: {} };
+    persist();
+    U.storage.set(LEGACY_KEY, null); // 旧版键一并作废，防止旧进度回潮
+    return save;
+  }
 
   /* ---------- 存档迁移（导出 / 导入） ---------- */
   // 格式：BT1.<base64(UTF-8 JSON)>——换设备 / 换网址时把进度带走
@@ -329,6 +397,8 @@ var DATA = (function () {
     buildLevel: buildLevel,
     loadSave: loadSave,
     persist: persist,
+    getDeviceCode: getDeviceCode,
+    resetProgress: resetProgress,
     exportCode: exportCode,
     importCode: importCode,
     get save() { return save; }

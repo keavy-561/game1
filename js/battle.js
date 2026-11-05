@@ -321,11 +321,12 @@ Battle.prototype = {
     rawHits.forEach(function (hit) {
       var k = hit.target.name + '|' + hit.color;
       if (!merged[k]) {
-        merged[k] = { r: hit.r, c: hit.c, color: hit.color, target: hit.target, amount: 0, weak: hit.weak };
+        merged[k] = { r: hit.r, c: hit.c, color: hit.color, target: hit.target, amount: 0, weak: hit.weak, sealed: !!hit.sealed };
         order.push(merged[k]);
       }
       merged[k].amount += hit.amount;
       merged[k].weak = merged[k].weak || hit.weak;
+      merged[k].sealed = merged[k].sealed || !!hit.sealed;
     });
     var hits = order;
     var self2 = this;
@@ -389,6 +390,7 @@ Battle.prototype = {
   computeHits: function (clearSet, waveIdx) {
     var hits = [];
     var self = this;
+    var sealed = this.level.sealed || []; // 本关封印色：消除不造成伤害
     var combo = this.comboMultAt(waveIdx);
     var firstBonus = 1;
     if (waveIdx === 1 && !this.firstWaveUsed && this.mods.firstWave > 0) {
@@ -403,6 +405,11 @@ Battle.prototype = {
       var color = tile.type;
       var target = this.monsterAtColumn(cl.c);
       if (!target) continue;
+      if (sealed.indexOf(color) >= 0) {
+        // 封印色：不造成伤害（但照常消耗步数、怪物照常行动），仅弹「封印」提示
+        hits.push({ r: cl.r, c: cl.c, color: color, target: target, amount: 0, sealed: true });
+        continue;
+      }
 
       var mult = combo * firstBonus;
       var weak = false;
@@ -426,6 +433,7 @@ Battle.prototype = {
   applyDamage: function (hit) {
     var m = hit.target;
     if (!m.alive) return;
+    if (hit.sealed) { this.ui.showDamage(m, 0, hit); return; } // 封印：不掉血，只弹提示
     var dmg = hit.amount;
     if (m.shield > 0) {
       var absorbed = Math.min(m.shield, dmg);
@@ -454,9 +462,11 @@ Battle.prototype = {
     (wave.runs || []).forEach(function (run) {
       if (run.cells.length > 3) bonus += (run.cells.length - 3) * CONFIG.match4Bonus;
     });
+    var sealed = this.level.sealed || [];
     var gained = false;
     for (var c = 0; c < 5; c++) {
       if (counts[c] <= 0) continue;
+      if (sealed.indexOf(c) >= 0) { counts[c] = 0; continue; } // 封印色不充能（也不飞能量球）
       var amount = counts[c] * CONFIG.energyPerTile * this.modsEnergyGain + (bonus / 5);
       var h = this.heroes[c];
       var before = h.energy;

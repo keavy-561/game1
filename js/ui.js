@@ -85,6 +85,21 @@ var UI = (function () {
     $('overlay-save').addEventListener('click', function (e) {
       if (e.target === this) hideOverlay('overlay-save');
     });
+    $('btn-reset').addEventListener('click', function () { AudioFX.play('select'); openResetConfirm(); });
+    $('btn-reset-cancel').addEventListener('click', function () {
+      AudioFX.play('select');
+      hideOverlay('overlay-reset');
+    });
+    $('btn-reset-ok').addEventListener('click', function () {
+      AudioFX.play('select');
+      DATA.resetProgress();
+      hideOverlay('overlay-reset');
+      refreshTitleProgress();
+      toast('已重新开始，进度已清空', 2400);
+    });
+    $('overlay-reset').addEventListener('click', function (e) {
+      if (e.target === this) hideOverlay('overlay-reset');
+    });
     bindSoundButtons();
     buildBackgroundDeco(0);
 
@@ -125,7 +140,31 @@ var UI = (function () {
     if (name === 'battle') M.screenBattle.classList.remove('hidden');
   }
 
-  function showTitle() { showScreen('title'); }
+  function showTitle() { showScreen('title'); refreshTitleProgress(); }
+
+  /* ============ 标题屏：进度提示（设备存档自动恢复的可视化） ============ */
+  function refreshTitleProgress() {
+    var chip = $('title-progress');
+    var btn = $('btn-start');
+    if (!chip || !btn) return;
+    var save = DATA.save;
+    var starCount = 0;
+    for (var k in save.stars) { if (save.stars[k]) starCount += save.stars[k]; }
+    if (save.unlocked > 1 || starCount > 0) {
+      chip.textContent = '已远征至第 ' + save.unlocked + ' 关' + (starCount ? ' · ★ ' + starCount : '');
+      chip.classList.remove('hidden');
+      btn.textContent = '继续远征';
+    } else {
+      chip.classList.add('hidden');
+      btn.textContent = '开始探索';
+    }
+  }
+
+  function openResetConfirm() {
+    var el = $('reset-device-code');
+    if (el) el.textContent = '设备码 ' + DATA.getDeviceCode();
+    $('overlay-reset').classList.remove('hidden');
+  }
 
   function onStartGame() {
     var save = DATA.save;
@@ -279,6 +318,10 @@ var UI = (function () {
       save.tips.boss = 1; DATA.persist();
       setTimeout(function () { toast('章节 BOSS 关：本章之王坐镇最终波，蓄好技能与炸弹迎接它！', 3800); }, 1200);
     }
+    if (n >= 17 && !save.tips.seal) {
+      save.tips.seal = 1; DATA.persist();
+      setTimeout(function () { toast('新机制：封印元素！目标栏标出的颜色被压制——消除它不造成伤害、不积攒能量，但照常消耗步数、怪物照常行动！', 4200); }, 1200);
+    }
   }
 
   function quitBattle() {
@@ -317,6 +360,14 @@ var UI = (function () {
       row.innerHTML = SVG.icon(def.icon) + '<span>' + def.desc + '</span>';
       row.dataset.key = key;
     });
+    // 封印元素徽章：本关被压制的颜色（消除无伤害、无能量）
+    var seals = level.sealed || [];
+    if (seals.length) {
+      var sealRow = U.div('obj obj-seal', om);
+      var sealGlyphs = '';
+      seals.forEach(function (ci) { sealGlyphs += '<span class="seal-g">' + SVG.glyph(ci) + '</span>'; });
+      sealRow.innerHTML = SVG.icon('curse') + sealGlyphs + '<span>封印 · 消除无效</span>';
+    }
 
     updateHp();
     updateShield();
@@ -347,7 +398,11 @@ var UI = (function () {
     chrome += 12;
     var availH = window.innerHeight - chrome;
     var cell = Math.floor(Math.min(availW / b.cols, availH / b.rows));
-    cell = U.clamp(cell, 30, 68);
+    // 怪物精灵随 cell 变大而变高：预留增长量（最大精灵高系数 1.75 + 富余），防止设置后底部溢出
+    if (cell > M.cell) {
+      cell = Math.floor(Math.min(availW / b.cols, (availH - (cell - M.cell) * 1.85) / b.rows));
+    }
+    cell = U.clamp(cell, 28, 68);
     M.cell = cell;
     M.board.style.width = (cell * b.cols) + 'px';
     M.board.style.height = (cell * b.rows) + 'px';
@@ -392,7 +447,10 @@ var UI = (function () {
   }
 
   function makeTileEl(tile) {
-    var el = U.div('tile' + (tile.type === 'stone' ? ' stone' : '') + (tile.special ? ' special ' + tile.special : ''), M.board);
+    var sealCls = '';
+    if (M.battle && M.battle.level && M.battle.level.sealed && typeof tile.type === 'number' &&
+      M.battle.level.sealed.indexOf(tile.type) >= 0) sealCls = ' sealed';
+    var el = U.div('tile' + (tile.type === 'stone' ? ' stone' : '') + (tile.special ? ' special ' + tile.special : '') + sealCls, M.board);
     el.innerHTML = '<div class="tile-inner">' + tileInnerHTML(tile) + '</div>';
     tile.el = el;
     el.dataset.id = tile.id;
@@ -787,6 +845,7 @@ var UI = (function () {
     for (var i = 0; i < rows.length; i++) {
       var key = rows[i].dataset.key;
       var def = DATA.OBJECTIVES[key];
+      if (!def) continue; // 封印徽章等非目标行
       if (def.check(battle.stats)) { rows[i].classList.add('done'); anyDone = true; }
     }
   }
@@ -826,6 +885,10 @@ var UI = (function () {
     if (cr.special === 'prism') {
       tile.el.classList.remove('rowBomb', 'colBomb', 'crossBomb', 'bomb');
       inner.innerHTML = '<div class="glyph">' + SVG.prismGem() + '</div><div class="tile-badge"></div>';
+      if (!DATA.save.tips.prism) {
+        DATA.save.tips.prism = 1; DATA.persist();
+        setTimeout(function () { toast('彩虹核心：点击它选一种颜色，或直接拖到相邻棋子上——消除全场该颜色！', 4200); }, 900);
+      }
     } else {
       if (!inner.querySelector('.tile-badge')) inner.insertAdjacentHTML('beforeend', '<div class="tile-badge"></div>');
     }
@@ -978,7 +1041,7 @@ var UI = (function () {
         setTimeout(function () {
           var src = cellCenter(hit.r, hit.c);
           var dst = monsterCenter(hit.target);
-          var pr = U.div('fx fx-projectile' + (hit.weak ? ' big' : ''), M.fxRoot);
+          var pr = U.div('fx fx-projectile' + (hit.weak ? ' big' : '') + (hit.sealed ? ' sealed' : ''), M.fxRoot);
           pr.innerHTML = SVG.glyph(hit.color);
           pr.style.left = src.x + 'px';
           pr.style.top = src.y + 'px';
@@ -1025,6 +1088,15 @@ var UI = (function () {
 
   function showDamage(m, amount, hit) {
     var pos = monsterCenter(m);
+    if (hit.sealed) {
+      // 封印命中：灰色「封印」胶囊，无闪光、无受击动画
+      var pillS = U.div('fx-dmg sealed', M.fxRoot);
+      pillS.textContent = '封印';
+      pillS.style.left = pos.x + 'px';
+      pillS.style.top = (pos.y - 10) + 'px';
+      (function (p) { setTimeout(function () { p.remove(); }, 1100); })(pillS);
+      return;
+    }
     // 命中冲击闪光（按攻击颜色）
     var hex = DATA.COLOR_INFO[hit.color].hex;
     var burst = U.div('fx-impact', M.fxRoot);
@@ -1528,6 +1600,8 @@ var UI = (function () {
   function openSaveIO() {
     $('save-export').value = DATA.exportCode();
     $('save-import').value = '';
+    var dc = $('save-device-code');
+    if (dc) dc.textContent = '本机设备码 ' + DATA.getDeviceCode() + ' · 存档按设备自动保存';
     $('overlay-save').classList.remove('hidden');
   }
 
@@ -1553,6 +1627,7 @@ var UI = (function () {
       AudioFX.enabled = DATA.save.sound !== false;
       refreshSoundButtons();
       hideOverlay('overlay-save');
+      refreshTitleProgress();
       toast('导入成功！进度已恢复到第 ' + DATA.save.unlocked + ' 关', 2600);
       AudioFX.play('bless');
     } else {

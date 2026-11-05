@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>花语远征 · Bloom Tale</title>
+<title>POPBLOOM · 三消远征</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,17 +16,19 @@
 <div id="screen-title" class="screen">
   <div class="title-card">
     <div class="title-logo" id="title-logo"></div>
-    <h1 class="game-title">花语远征</h1>
-    <p class="game-sub">Bloom Tale · 三消远征</p>
+    <h1 class="game-title">POPBLOOM</h1>
+    <p class="game-sub">Pop &amp; Bloom · 三消远征</p>
     <div class="title-rules">
       <div class="rule-chip"><span class="rule-ic" data-ic="swap"></span><label>交换相邻棋子</label></div>
       <div class="rule-chip"><span class="rule-ic" data-ic="match"></span><label>三连即可消除</label></div>
       <div class="rule-chip"><span class="rule-ic" data-ic="attack"></span><label>消除即是攻击</label></div>
     </div>
     <button class="btn btn-primary btn-big" id="btn-start">开始探索</button>
+    <div class="title-progress hidden" id="title-progress"></div>
     <div class="title-foot">
       <button class="btn btn-ghost" id="btn-map-from-title">关卡一览</button>
       <button class="btn btn-ghost" id="btn-save-io">存档迁移</button>
+      <button class="btn btn-ghost" id="btn-reset">重新开始</button>
       <button class="btn btn-icon" id="btn-sound-title" title="音效"></button>
     </div>
   </div>
@@ -149,7 +151,7 @@
 <div class="overlay hidden" id="overlay-prism">
   <div class="panel prism-panel">
     <h2 class="panel-title">彩虹核心</h2>
-    <p class="panel-sub">选择一种颜色，消除全场同色棋子（消耗 1 步）</p>
+    <p class="panel-sub">选一种颜色，全场同色一起消除（消耗 1 步）· 也可以把核心直接拖到相邻棋子上</p>
     <div class="prism-colors" id="prism-colors"></div>
     <button class="btn btn-soft" id="btn-prism-cancel">取消</button>
   </div>
@@ -182,6 +184,19 @@
       <button class="btn btn-primary" id="btn-save-import">导入存档</button>
     </div>
     <button class="btn btn-ghost" id="btn-save-close">关闭</button>
+    <div class="save-device" id="save-device-code"></div>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：重新开始确认 ===== -->
+<div class="overlay hidden" id="overlay-reset">
+  <div class="panel reset-panel">
+    <h2 class="panel-title">重新开始远征？</h2>
+    <p class="panel-sub">本机（<b id="reset-device-code"></b>）的全部远征进度将被清空，回到第 1 关。<br>此操作不可撤销。</p>
+    <div class="reset-btns">
+      <button class="btn btn-soft" id="btn-reset-cancel">再想想</button>
+      <button class="btn btn-danger" id="btn-reset-ok">确认重来</button>
+    </div>
   </div>
 </div>
 

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>POPBLOOM · 单文件打包</title>
+<style>
+body { margin:0; background:#FBF3E2; color:#5B4A3F; font:15px/1.6 "PingFang SC","Microsoft YaHei",sans-serif; display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px; }
+h1 { margin:0; font-size:22px; letter-spacing:4px; }
+#status { background:#FFFEF8; border:2px solid #E9DCC4; border-radius:14px; padding:14px 20px; max-width:580px; width:100%; white-space:pre-wrap; box-shadow:0 6px 18px rgba(120,96,60,.16); font-size:13px; line-height:1.7; }
+#dl { display:none; text-decoration:none; background:linear-gradient(135deg,#6DC087,#4E9E69); color:#fff; font-weight:900; padding:12px 30px; border-radius:999px; letter-spacing:2px; box-shadow:0 10px 26px rgba(78,158,105,.35); }
+#dl:hover { transform:translateY(-2px); }
+#saveas { display:none; border:none; cursor:pointer; background:linear-gradient(135deg,#F5B93F,#D89B22); color:#fff; font:900 16px inherit; font-family:inherit; padding:15px 38px; border-radius:999px; letter-spacing:1px; box-shadow:0 10px 26px rgba(216,155,34,.4); }
+#saveas:hover { transform:translateY(-2px); }
+#hint { font-size:12px; color:#97836F; max-width:580px; text-align:center; }
+#frame-wrap { width:480px; max-width:100%; height:740px; border:3px solid #F0E4CB; border-radius:20px; overflow:hidden; background:#fff; box-shadow:0 6px 18px rgba(120,96,60,.16); }
+iframe { width:100%; height:100%; border:0; }
+.ok { color:#4E9E69; font-weight:900; }
+.bad { color:#D95A50; font-weight:900; }
+</style>
+</head>
+<body>
+<h1>POPBLOOM · 单文件版打包</h1>
+<div id="status">正在读取源文件…</div>
+<button id="saveas">💾 保存到电脑（可选位置）</button>
+<a id="dl" download="POPBLOOM.html">⬇ 浏览器直接下载</a>
+<div id="frame-wrap"><iframe id="preview"></iframe></div>
+<script>
+(async function () {
+  var st = document.getElementById('status');
+  var dl = document.getElementById('dl');
+  st.textContent = '正在读取源文件…';
+  try {
+    var css = await (await fetch('style.css')).text();
+    var html = await (await fetch('index.html')).text();
+    var names = ['util', 'audio', 'svg', 'data', 'board', 'battle', 'ui', 'main'];
+
+    // 内联 CSS
+    var cssTag = '<link rel="stylesheet" href="style.css">';
+    if (html.indexOf(cssTag) === -1) throw new Error('未找到 CSS 引用标签');
+    html = html.replace(cssTag, '<style>\n' + css + '\n</style>');
+    st.textContent = '✓ style.css 已内联（' + css.length + ' 字符）';
+
+    // 内联 8 个 JS
+    for (var i = 0; i < names.length; i++) {
+      var js = await (await fetch('js/' + names[i] + '.js')).text();
+      var tag = '<script src="js/' + names[i] + '.js"></' + 'script>';
+      if (html.indexOf(tag) === -1) throw new Error('未找到脚本引用: js/' + names[i] + '.js');
+      var risk = js.indexOf('</' + 'script') >= 0 ? '  [!] 内含闭合标签，需检查' : '';
+      html = html.replace(tag, '<' + 'script>\n' + js + '\n</' + 'script>');
+      st.textContent += '\n✓ js/' + names[i] + '.js 已内联（' + js.length + ' 字符）' + risk;
+    }
+    window.__singleHtml = html;
+
+    // 生成单文件 blob：下载 + 预览
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    window.__singleBlob = blob;
+    var url = URL.createObjectURL(blob);
+    dl.href = url;
+    dl.style.display = 'inline-block';
+    var frame = document.getElementById('preview');
+    frame.src = url;
+
+    // 主按钮：另存为（用户自己选位置，推荐桌面）
+    var saveas = document.getElementById('saveas');
+    saveas.style.display = 'inline-block';
+    saveas.addEventListener('click', async function () {
+      try {
+        var handle = await window.showSaveFilePicker({
+          suggestedName: 'POPBLOOM.html',
+          types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html'] } }]
+        });
+        var w = await handle.createWritable();
+        await w.write(window.__singleBlob);
+        await w.close();
+        st.textContent += '\n✓ 已保存到你选择的位置（POPBLOOM.html）！';
+      } catch (e) {
+        if (String(e).indexOf('Abort') >= 0) {
+          st.textContent += '\n· 已取消保存（可再点一次）';
+        } else {
+          st.textContent += '\n[!] 保存失败：' + String(e).slice(0, 100) + ' —— 请改用「浏览器直接下载」';
+        }
+      }
+    });
+
+    st.textContent += '\n✓ 打包完成：单文件共 ' + (blob.size / 1024).toFixed(1) + ' KB';
+    st.textContent += '\n—— 点上面黄色按钮保存；预览窗口里就是单文件版实况 ——';
+
+    // 验证 iframe 里的游戏确实跑起来了
+    frame.addEventListener('load', function () {
+      setTimeout(function () {
+        try {
+          var w = frame.contentWindow;
+          var logo = w.document.getElementById('title-logo');
+          var booted = !!(w && w.DATA && w.DATA.save && w.UI && logo && logo.innerHTML.length > 10);
+          st.textContent += booted
+            ? '\n✓ 自检通过：游戏引擎已初始化（标题屏就绪）'
+            : '\n[!] 自检未确认游戏初始化';
+        } catch (e) {
+          st.textContent += '\n[!] 自检异常: ' + String(e).slice(0, 80);
+        }
+      }, 900);
+    });
+  } catch (e) {
+    st.textContent += '\n打包失败：' + String(e).slice(0, 200);
+  }
+})();
+</script>
+</body>
+</html>
