@@ -12,6 +12,7 @@ var UI = (function () {
     selected: null, dragInfo: null,
     fxRoot: null, guide: null,
     hintTimer: null, idleTimer: null,
+    teamIntroAfter: null,
     listeners: {}
   };
 
@@ -73,6 +74,14 @@ var UI = (function () {
     });
     $('overlay-prism').addEventListener('click', function (e) {
       if (e.target === this) { hideOverlay('overlay-prism'); M.prismCell = null; }
+    });
+    $('btn-team-go').addEventListener('click', function () {
+      AudioFX.init(); AudioFX.play('select');
+      hideOverlay('overlay-team');
+      teamIntroDismissed();
+    });
+    $('overlay-team').addEventListener('click', function (e) {
+      if (e.target === this) { hideOverlay('overlay-team'); teamIntroDismissed(); }
     });
     $('btn-chapter-go').addEventListener('click', function () {
       hideOverlay('overlay-chapter');
@@ -247,7 +256,7 @@ var UI = (function () {
   /* ============ 战斗构建 ============ */
   function startBattle(n) {
     // 关闭所有覆盖层
-    ['overlay-result', 'overlay-bless', 'overlay-monster', 'overlay-buffs', 'overlay-chapter', 'overlay-prism', 'overlay-pause', 'overlay-save'].forEach(function (id) {
+    ['overlay-result', 'overlay-bless', 'overlay-monster', 'overlay-buffs', 'overlay-team', 'overlay-chapter', 'overlay-prism', 'overlay-pause', 'overlay-save'].forEach(function (id) {
       $(id).classList.add('hidden');
     });
     clearTimeout(M.comboTimer);
@@ -280,7 +289,10 @@ var UI = (function () {
       if (level.tutorial) Guide.begin(M.battle);
       else Guide.stop();
       resetIdleTimer();
-      oneTimeTips(level.n);
+      // 首次进入非教程战斗：先展示队伍技能一览，关掉面板后再弹一次性小知识
+      var tips = function () { oneTimeTips(level.n); };
+      if (!level.tutorial && maybeShowTeamIntro()) { M.teamIntroAfter = tips; return; }
+      tips();
     };
 
     // 章节过场
@@ -324,6 +336,34 @@ var UI = (function () {
     }
   }
 
+  /* ============ 远征队伍：首次进入非教程战斗时展示技能一览 ============ */
+  function maybeShowTeamIntro() {
+    var save = DATA.save;
+    if (save.tips.teamIntro) return false;
+    save.tips.teamIntro = 1;
+    DATA.persist();
+    var list = $('team-list');
+    U.clearEl(list);
+    DATA.HEROES.forEach(function (h) {
+      var row = U.div('team-row', list);
+      var face = U.div('team-face', row);
+      face.innerHTML = SVG.hero(h.id);
+      var tx = U.div('team-tx', row);
+      var b = U.el('b', null, tx);
+      b.textContent = h.name + ' · ' + h.title;
+      var i = U.el('i', null, tx);
+      i.textContent = h.skill;
+      i.style.color = DATA.COLOR_INFO[h.color].hex;
+      var em = U.el('em', null, tx);
+      em.textContent = h.skillDesc;
+    });
+    $('overlay-team').classList.remove('hidden');
+    return true;
+  }
+  function teamIntroDismissed() {
+    if (M.teamIntroAfter) { var cb = M.teamIntroAfter; M.teamIntroAfter = null; cb(); }
+  }
+
   function quitBattle() {
     // 保留远征进度（save.run 指向当前关）
     clearTimeout(M.hintTimer); clearTimeout(M.idleTimer);
@@ -331,7 +371,7 @@ var UI = (function () {
     // 废弃仍在跑的异步流程，防止退出后旧流程继续结算/解锁
     if (M.battle && !M.battle.over) { M.battle.over = true; M.battle.busy = true; }
     M.battle = null;
-    ['overlay-result', 'overlay-bless', 'overlay-monster', 'overlay-buffs', 'overlay-chapter', 'overlay-prism', 'overlay-pause', 'overlay-save'].forEach(function (id) {
+    ['overlay-result', 'overlay-bless', 'overlay-monster', 'overlay-buffs', 'overlay-team', 'overlay-chapter', 'overlay-prism', 'overlay-pause', 'overlay-save'].forEach(function (id) {
       $(id).classList.add('hidden');
     });
     showMap();
@@ -388,7 +428,7 @@ var UI = (function () {
 
   function layoutBoard() {
     var b = M.battle.board;
-    var availW = Math.min(window.innerWidth - 24, 460);
+    var availW = Math.min(window.innerWidth - 14, 460);
     // 动态测量除棋盘外的固定区域高度
     var chrome = 0;
     ['.hud', '.hud-objective', '.monsters', '.team-strip', '.heroes', '.battle-foot'].forEach(function (sel) {
@@ -400,17 +440,18 @@ var UI = (function () {
     var cell = Math.floor(Math.min(availW / b.cols, availH / b.rows));
     // 怪物精灵随 cell 变大而变高：预留增长量（最大精灵高系数 1.75 + 富余），防止设置后底部溢出
     if (cell > M.cell) {
-      cell = Math.floor(Math.min(availW / b.cols, (availH - (cell - M.cell) * 1.85) / b.rows));
+      cell = Math.floor(Math.min(availW / b.cols, (availH - (cell - M.cell) * 1.8) / b.rows));
     }
-    cell = U.clamp(cell, 28, 68);
+    cell = U.clamp(cell, 30, 68);
     M.cell = cell;
     M.board.style.width = (cell * b.cols) + 'px';
     M.board.style.height = (cell * b.rows) + 'px';
     M.board.style.setProperty('--cell', cell + 'px');
     // 怪物精灵等棋盘外元素也要按格子缩放：挂到整个战斗屏
     M.screenBattle.style.setProperty('--cell', cell + 'px');
-    // 怪物行与棋盘同宽，保证攻击路线对齐
+    // 怪物行与棋盘同宽同列数，保证攻击路线对齐
     M.monsters.style.width = (cell * b.cols + 6) + 'px';
+    M.monsters.style.gridTemplateColumns = 'repeat(' + b.cols + ', 1fr)';
   }
 
   /* ============ 棋子渲染 ============ */
@@ -506,7 +547,7 @@ var UI = (function () {
     window.addEventListener('pointermove', function (e) {
       if (!M.dragInfo || M.dragInfo.done || !M.battle || M.battle.busy) return;
       var dx = e.clientX - M.dragInfo.x, dy = e.clientY - M.dragInfo.y;
-      if (Math.abs(dx) < M.cell * 0.35 && Math.abs(dy) < M.cell * 0.35) return;
+      if (Math.abs(dx) < M.cell * 0.42 && Math.abs(dy) < M.cell * 0.42) return;
       var dir;
       if (Math.abs(dx) > Math.abs(dy)) dir = [0, dx > 0 ? 1 : -1];
       else dir = [dy > 0 ? 1 : -1, 0];
@@ -732,7 +773,7 @@ var UI = (function () {
       // 释放按钮
       var cast = U.el('button', 'hero-cast', el);
       cast.type = 'button';
-      cast.textContent = '释放';
+      cast.textContent = h.def.skill;
       h.el = el; h.ringFill = ring.querySelector('.ring-fill'); h.circ = CIRC;
       h.hpFill = hpFill; h.hpText = hpText; h.enFill = enFill; h.castEl = cast;
       el.addEventListener('click', function () {
@@ -757,7 +798,7 @@ var UI = (function () {
     h.el.classList.toggle('ready', h.energy >= CONFIG.energyCap && !h.ko);
     if (h.castEl) {
       h.castEl.classList.toggle('ready', h.energy >= CONFIG.energyCap && !h.ko);
-      h.castEl.textContent = h.ko ? '晕厥' : '释放';
+      h.castEl.textContent = h.ko ? '晕厥' : h.def.skill;
     }
   }
 
@@ -1313,12 +1354,12 @@ var UI = (function () {
   }
 
   var TIP_POOL = [
-    '同色三连即可消除，四连诞生炸弹，五连诞生彩虹核心！',
-    '棋子在哪一列，就会攻击那一列的怪物！',
+    '三连消除，四连炸弹，五连彩虹核心！',
+    '棋子在哪一列，就攻击哪一列的怪物！',
     '连锁消除越多，伤害倍率越高！',
-    '怪物优先攻击能量最高的英雄——技能满了就快释放！',
-    '英雄生命值归零会晕厥，用星辉恩泽可以救回！',
-    '预警徽章变红时，怪物下一回合就要动手了！'
+    '怪物会集火能量最高的英雄！',
+    '英雄倒下时，用星辉恩泽救回！',
+    '红色预警亮起：怪物即将攻击！'
   ];
   var tipIdx = 0;
   function updateBattleTip() {
@@ -1331,14 +1372,14 @@ var UI = (function () {
       if (m.alive && m.frozen <= 0 && m.cdLeft === 1) { warn = m; break; }
     }
     if (warn) {
-      el.textContent = '⚠ ' + warn.name + ' 即将攻击！优先集火或冻结它';
+      el.textContent = '⚠ ' + warn.name + ' 即将攻击！快集火或冻结它';
       el.className = 'battle-tip warn';
       return;
     }
     for (var j = 0; j < b.heroes.length; j++) {
       var h = b.heroes[j];
       if (!h.ko && h.energy >= CONFIG.energyCap) {
-        el.textContent = '✦ ' + h.def.name + ' 技能就绪，点头像或「释放」施放';
+        el.textContent = '✦ ' + h.def.name + '「' + h.def.skill + '」就绪，点头像施放';
         el.className = 'battle-tip go';
         return;
       }

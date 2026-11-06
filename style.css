@@ -215,7 +215,7 @@ body { position: relative; }
 /* --- HUD --- */
 .hud {
   width: 100%; display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px 4px;
+  padding: 6px 10px 2px;
 }
 .hud-level { display: flex; flex-direction: column; line-height: 1.15; flex: 1; min-width: 0; }
 .hud-chapter { font-size: 11px; color: var(--ink-soft); letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -229,7 +229,7 @@ body { position: relative; }
 .hud-moves {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: var(--panel); border-radius: 16px; box-shadow: var(--shadow-soft);
-  width: 64px; height: 52px; flex: none;
+  width: 58px; height: 46px; flex: none;
 }
 .moves-num { font-size: 22px; font-weight: 900; color: var(--ink); line-height: 1; }
 .moves-label { font-size: 10px; color: var(--ink-soft); letter-spacing: 2px; }
@@ -240,7 +240,7 @@ body { position: relative; }
 
 /* --- 队伍状态条（总血量 + 护盾） --- */
 .team-strip {
-  width: 100%; padding: 5px 16px 2px;
+  width: 100%; padding: 3px 12px 1px;
   display: flex; align-items: center; gap: 8px;
 }
 .ts-label {
@@ -276,12 +276,12 @@ body { position: relative; }
   25%,75% { filter: drop-shadow(0 0 8px rgba(242,118,107,.8)); }
 }
 
-/* --- 怪物区（7 列网格，与棋盘对齐） --- */
+/* --- 怪物区（6 列网格，与棋盘对齐） --- */
 .monsters {
-  /* 顶部 14px 给预警徽章（top:-12px 悬在头上）留空间，不再盖住目标文字 */
-  width: 100%; padding: 14px 12px 8px;
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
-  align-items: end; min-height: 112px;
+  /* 顶部 10px 给预警徽章（top:-9px 悬在头上）留空间，不再盖住目标文字 */
+  width: 100%; padding: 10px 10px 6px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
+  align-items: end; min-height: 98px;
   flex: none; /* 不被 flex 压缩，卡片不再溢出到棋盘；棋盘经 layoutBoard 自动缩小适配 */
 }
 .monster { position: relative; cursor: pointer; }
@@ -337,7 +337,7 @@ body { position: relative; }
 .m-weak .wk.w { color: var(--c-r-deep); }
 .m-weak .wk.s { color: var(--ink-faint); }
 .m-telegraph {
-  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 3px; flex: none;
   background: #FFF; border-radius: 999px; padding: 2px 7px 2px 4px;
   box-shadow: var(--shadow-soft); z-index: 5;
@@ -420,7 +420,7 @@ body { position: relative; }
 
 /* --- 棋盘 --- */
 .board-wrap {
-  position: relative; width: 100%; padding: 4px 12px 6px;
+  position: relative; width: 100%; padding: 4px 7px 6px;
   display: flex; justify-content: center;
 }
 .board {
@@ -560,21 +560,21 @@ body { position: relative; }
 
 /* --- 英雄区 --- */
 .heroes {
-  width: 100%; padding: 6px 12px 8px;
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  width: 100%; padding: 4px 10px 5px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
 }
 .hero {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
   cursor: pointer; position: relative;
-  border-radius: 14px; padding: 4px 2px 3px;
+  border-radius: 14px; padding: 3px 2px 2px;
   transition: background .2s;
 }
 .hero:active { transform: scale(.95); }
 .hero-name { font-size: 10px; font-weight: 800; color: var(--ink-soft); line-height: 1.1; }
-.hero-ring { position: relative; width: 46px; height: 46px; flex: none; }
+.hero-ring { position: relative; width: 40px; height: 40px; flex: none; }
 .hero-ring svg.ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .hero-face {
-  position: absolute; inset: 6px; border-radius: 50%;
+  position: absolute; inset: 5px; border-radius: 50%;
   overflow: hidden; background: #FFF;
   box-shadow: 0 2px 6px rgba(120,96,60,.2);
 }
@@ -608,8 +608,8 @@ body { position: relative; }
 .hero-cast {
   font-family: var(--f);
   border: none; border-radius: 999px;
-  width: 100%; padding: 3px 0 2px; margin-top: 1px;
-  font-size: 10px; font-weight: 900; letter-spacing: 2px;
+  width: 100%; padding: 2px 0 1px; margin-top: 0;
+  font-size: 10px; font-weight: 900; letter-spacing: 1px;
   color: var(--ink-faint); background: #EFE3CB;
   transition: background .2s, color .2s, box-shadow .2s;
 }
@@ -656,8 +656,8 @@ body { position: relative; }
 
 /* --- 目标行（HUD 下方，单行） --- */
 .hud-objective {
-  width: 100%; padding: 0 16px 2px;
-  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  width: 100%; padding: 0 10px 1px;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
   font-size: 11px; color: var(--ink-soft); font-weight: 700;
   line-height: 1.2; min-height: 15px;
 }
@@ -665,22 +665,30 @@ body { position: relative; }
 .hud-objective .obj svg { width: 12px; height: 12px; flex: none; }
 .hud-objective .obj.done { color: var(--c-g-deep); text-decoration: line-through; opacity: .8; }
 
-/* --- 战斗底部：提示按钮 + 上下文提示 --- */
+/* --- 战斗底部：提示按钮 + 上下文提示（卡片式，醒目） --- */
 .battle-foot {
-  width: 100%; padding: 2px 16px 10px;
+  width: 100%; padding: 2px 12px 6px;
   display: flex; align-items: center; gap: 10px;
+  flex: none;
 }
 .btn-hint { flex: none; padding: 7px 14px; font-size: 13px; }
 .battle-tip {
   flex: 1; min-width: 0;
-  font-size: 11px; font-weight: 700; color: var(--ink-faint);
+  font-size: 12px; font-weight: 800; color: var(--ink-soft);
   line-height: 1.25;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  transition: color .2s;
+  background: #FFFDF6;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 5px 10px;
+  box-shadow: var(--shadow-soft);
+  transition: color .2s, border-color .2s, background .2s;
 }
-.battle-tip.warn { color: var(--c-r-deep); animation: tipWarn 1s ease-in-out infinite; }
-@keyframes tipWarn { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
-.battle-tip.go { color: #C07A15; }
+.battle-tip.warn {
+  color: #B33227; background: #FDEBE9; border-color: #F6CFC9;
+  animation: tipWarn 1s ease-in-out infinite;
+}
+@keyframes tipWarn { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
+.battle-tip.go { color: #A0691A; background: #FFF6E3; border-color: #F3D9A8; }
 
 /* ==========================================================
    教程引导
@@ -853,6 +861,26 @@ body { position: relative; }
   border-radius: 999px; font-size: 11px; font-weight: 900; padding: 2px 8px; flex: none;
 }
 .buffs-empty { font-size: 13px; color: var(--ink-faint); padding: 20px; }
+
+/* --- 远征队伍（首次战斗的技能一览） --- */
+.team-panel { max-width: 380px; }
+.team-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.team-row {
+  display: flex; align-items: center; gap: 12px;
+  background: #FFFDF6; border-radius: 14px; padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  text-align: left;
+}
+.team-face {
+  width: 36px; height: 36px; flex: none; border-radius: 50%;
+  overflow: hidden; background: #FFF;
+  box-shadow: 0 2px 6px rgba(120,96,60,.2);
+}
+.team-face svg { width: 100%; height: 100%; }
+.team-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.team-tx b { font-size: 13px; color: var(--ink); }
+.team-tx i { font-style: normal; font-size: 12px; font-weight: 900; }
+.team-tx em { font-style: normal; font-size: 11px; color: var(--ink-soft); line-height: 1.35; }
 
 /* --- 章节过场 --- */
 .chapter-panel { text-align: center; }
@@ -1120,11 +1148,11 @@ body { position: relative; }
 /* 教程完成 / 通用 toast */
 .toast {
   position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
-  z-index: 70; background: #FFF; border-radius: 999px;
+  z-index: 70; background: #FFF; border-radius: 20px;
   padding: 10px 22px; box-shadow: var(--shadow-lift);
   font-size: 14px; font-weight: 800; color: var(--ink);
   animation: toastIn .35s cubic-bezier(.2,.8,.4,1.3) both;
-  white-space: nowrap; pointer-events: none;
+  max-width: 86vw; text-align: center; line-height: 1.45; pointer-events: none;
   border: 2px solid var(--line);
 }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%); } }
@@ -1141,8 +1169,8 @@ body { position: relative; }
 /* ---------- 响应式 ---------- */
 @media (max-width: 400px) {
   .game-title { font-size: 40px; letter-spacing: 7px; }
-  .hero-ring { width: 42px; height: 42px; }
-  .hero-face { inset: 5px; }
+  .hero-ring { width: 38px; height: 38px; }
+  .hero-face { inset: 4px; }
   .hud-moves { width: 56px; }
   .heroes { gap: 5px; }
   .hero-name { font-size: 9px; }
@@ -1155,7 +1183,7 @@ body { position: relative; }
 
 /* 矮屏：压缩怪物/英雄区，保证 8 行棋盘放得下 */
 @media (max-height: 700px) {
-  .monsters { min-height: 92px; padding: 12px 12px 6px; }
+  .monsters { min-height: 86px; padding: 8px 10px 4px; }
   /* 矮屏压缩怪物卡：精灵更小、文字更紧，避免挤占棋盘空间 */
   .m-card { padding: 4px 3px 4px; gap: 1px; }
   .m-sprite { width: calc(var(--cell, 52px) * 1.05); height: calc(var(--cell, 52px) * 1.05); }
@@ -1170,7 +1198,7 @@ body { position: relative; }
   .m-weak .wk svg { width: 9px; height: 9px; }
   .hero-ring { width: 40px; height: 40px; }
   .hero-face { inset: 5px; }
-  .heroes { padding: 4px 12px 6px; gap: 6px; }
+  .heroes { padding: 3px 10px 4px; gap: 5px; }
   .hud { padding: 6px 12px 3px; }
   .hud-moves { height: 46px; }
   .toast { bottom: 62px; }

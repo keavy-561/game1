@@ -2,7 +2,7 @@
    游戏数据：配置 / 英雄 / 怪物 / 祝福 / 60 关生成
    ========================================================== */
 var CONFIG = {
-  COLS: 7,
+  COLS: 6,
   ROWS: 8,
   COLORS: 5,
   playerHp: 110,
@@ -32,27 +32,27 @@ var DATA = (function () {
   var HEROES = [
     {
       id: 'hong', color: 0, name: '绯樱', title: '花剑士',
-      skill: '绯樱百华', skillDesc: '对生命值最高的敌人造成大量伤害',
+      skill: '绯樱百华', skillDesc: '对当前血量最高的敌人造成 7 倍攻击的伤害',
       cast: 'burst'
     },
     {
       id: 'lan', color: 1, name: '澜', title: '潮汐法师',
-      skill: '潮汐冻结', skillDesc: '所有敌人行动延后 2 回合，并造成伤害',
+      skill: '潮汐冻结', skillDesc: '全体敌人延后 2 回合并各受 2 倍攻击伤害',
       cast: 'freeze'
     },
     {
       id: 'ya', color: 2, name: '芽', title: '翠藤守卫',
-      skill: '翠藤护壁', skillDesc: '获得护盾，抵挡受到的伤害',
+      skill: '翠藤护壁', skillDesc: '获得 40 点护盾，抵挡怪物伤害',
       cast: 'shield'
     },
     {
       id: 'liang', color: 3, name: '亮', title: '星辉牧师',
-      skill: '星辉恩泽', skillDesc: '恢复生命值',
+      skill: '星辉恩泽', skillDesc: '立即恢复全队 45 点生命',
       cast: 'heal'
     },
     {
       id: 'ying', color: 4, name: '影', title: '月影游侠',
-      skill: '月影连斩', skillDesc: '对所有敌人各造成一次伤害',
+      skill: '月影连斩', skillDesc: '对所有敌人各造成 2.5 倍攻击伤害',
       cast: 'slashAll'
     }
   ];
@@ -159,7 +159,7 @@ var DATA = (function () {
   var OBJ_KEYS = Object.keys(OBJECTIVES);
 
   /* ---------- 关卡生成（确定性） ---------- */
-  var PARTITIONS = [[3, 2, 2], [2, 2, 2, 1], [3, 3, 1], [2, 3, 2], [1, 1, 2, 3], [2, 1, 2, 2], [1, 3, 2, 1], [3, 2, 1, 1], [2, 2, 1, 2], [1, 2, 2, 2]];
+  var PARTITIONS = [[3, 2, 1], [2, 2, 2], [3, 3], [2, 2, 1, 1], [1, 1, 2, 2], [2, 1, 2, 1], [1, 3, 2], [2, 1, 3], [1, 2, 2, 1], [3, 1, 1, 1]];
 
   function buildLevel(n) {
     var rng = U.rng(n * 9973 + 17);
@@ -184,8 +184,12 @@ var DATA = (function () {
       level.moves = 20;
       level.startEnergy = 65;
     } else {
-      totalHp = 240 + 17 * n;
-      level.moves = U.clamp(Math.ceil(totalHp / 28) + 5, 12, 34);
+      /* 难度曲线：1-4 关保持宽松（上手期）；5 关起线性加码；
+         10 关起叠加超线性项（0.85·(n-9)^1.55）；
+         步数按「每步需求伤害 20+0.35n」反推——需求随关卡稳步上升，
+         通关不再是白给的（还要配合封印元素与更强的怪物攻击）。 */
+      totalHp = 240 + (n <= 4 ? 17 : 20) * n + Math.floor(0.85 * Math.pow(Math.max(0, n - 9), 1.55));
+      level.moves = U.clamp(Math.ceil(totalHp / (20 + 0.35 * n)) + (n <= 9 ? 1 : 0), 12, 46);
     }
 
     // 每波 HP 预算占比（最终波最重）
@@ -205,10 +209,10 @@ var DATA = (function () {
         families = [ch.boss.family, 'sprout', 'sprout'];
       } else if (isFinal && superBoss) {
         // 精英超级 BOSS：大体型精英 + 两只随从
-        sizes = [4, 2, 1];
+        sizes = [4, 2];
         var eFam = U.choice(rng, ch.pool);
         if (eFam === 'roseking') eFam = 'fluff';
-        families = [eFam, 'sprout', 'sprout'];
+        families = [eFam, 'sprout'];
       } else {
         var parts = U.shuffle(rng, PARTITIONS.filter(function (p) { return p.length <= 4 && Math.max.apply(null, p) <= 3; }));
         sizes = parts[0];
@@ -238,7 +242,7 @@ var DATA = (function () {
         for (var c = 0; c < s; c++) { cols.push(col); col++; }
 
         var hp = Math.round(hpShare[mi] * (isBossM ? 1 : isElite ? 1.15 : 0.9) + (isBossM ? 30 : isElite ? 20 : 0));
-        var atk = Math.round((5 + 0.2 * n) * (s === 1 ? 0.85 : 1) * (isBossM ? 1.15 : isElite ? 1.1 : 1));
+        var atk = Math.round((5 + 0.26 * n) * (s === 1 ? 0.85 : 1) * (isBossM ? 1.15 : isElite ? 1.1 : 1));
         var cd = isBossM ? 4 : (fd.sizes[0] >= 2 ? 3 : 4);
         if (fam === 'golem') cd = 4;
         if (isElite) cd = 3;

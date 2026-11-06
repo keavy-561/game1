@@ -726,6 +726,8 @@ Battle.prototype = {
     }
     if (h.energy < CONFIG.energyCap) {
       this.ui.flashHero(heroIdx, false);
+      var pct = Math.floor(h.energy / CONFIG.energyCap * 100);
+      this.ui.toast('「' + h.def.skill + '」' + h.def.skillDesc + '（能量 ' + pct + '%）', 2400);
       return;
     }
     this.busy = true;

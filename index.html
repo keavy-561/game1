@@ -66,10 +66,10 @@
   <!-- 顶部第二行：当前目标 -->
   <div class="hud-objective" id="objective-mini"></div>
 
-  <!-- 中上部：怪物区（与棋盘同宽的 7 列网格） -->
+  <!-- 中上部：怪物区（与棋盘同宽的 6 列网格） -->
   <div class="monsters" id="monsters"></div>
 
-  <!-- 中部：7×8 消除棋盘 -->
+  <!-- 中部：6×8 消除棋盘 -->
   <div class="board-wrap" id="board-wrap">
     <div class="combo-pop hidden" id="combo-pop"></div>
     <div class="board" id="board"></div>
@@ -134,6 +134,16 @@
     <h2 class="panel-title">远征祝福</h2>
     <div class="buffs-list" id="buffs-list"></div>
     <button class="btn btn-soft" id="btn-buffs-close">返回</button>
+  </div>
+</div>
+
+<!-- ===== 覆盖层：远征队伍（首次战斗展示技能一览） ===== -->
+<div class="overlay hidden" id="overlay-team">
+  <div class="panel team-panel">
+    <h2 class="panel-title">远征队伍</h2>
+    <p class="panel-sub">五位英雄的技能一览 · 战斗中点英雄头像可随时查看</p>
+    <div class="team-list" id="team-list"></div>
+    <button class="btn btn-primary" id="btn-team-go">出发！</button>
   </div>
 </div>
 
