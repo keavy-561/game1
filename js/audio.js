@@ -208,3 +208,5 @@ var AudioFX = {
     }
   }
 };
+
+export { AudioFX };

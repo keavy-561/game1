@@ -295,3 +295,5 @@ var SVG = (function () {
     face: face
   };
 })();
+
+export { SVG };

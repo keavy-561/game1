@@ -203,21 +203,17 @@
 <!-- 全局提示 toast -->
 <div class="toast hidden" id="toast"></div>
 
-<script src="js/util.js"></script>
-<script>
+<script type="module">
 /* ===== 测试页存储隔离：读取固定测试档，写入全部 no-op（绝不触碰真实存档） ===== */
+import { U } from './js/util.js';
 (function () {
   var TEST_SAVE = { v: 1, unlocked: 60, stars: {}, sound: true, run: null, tips: {}, best: {} };
   U.storage.get = function () { return JSON.parse(JSON.stringify(TEST_SAVE)); };
   U.storage.set = function () { /* 测试模式不落盘 */ };
 })();
+// 补丁先于入口生效：DATA 模块求值时不读存储，loadSave() 只在 main.js 的 boot 里调用，
+// 故动态 import main.js 的顺序即补丁生效顺序。
+await import('./js/main.js');
 </script>
-<script src="js/audio.js"></script>
-<script src="js/svg.js"></script>
-<script src="js/data.js"></script>
-<script src="js/board.js"></script>
-<script src="js/battle.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
 </body>
 </html>

@@ -1,3 +1,8 @@
+import { U } from './util.js';
+import { CONFIG, DATA } from './data.js';
+import { AudioFX } from './audio.js';
+import { Board } from './board.js';
+
 /* ==========================================================
    战斗控制器：状态 + 数值 + 流程编排
    ========================================================== */
@@ -884,3 +889,5 @@ Battle.prototype = {
     this.ui.emit('lose');
   }
 };
+
+export { TIMING, Battle };
