@@ -1,3 +1,9 @@
+import { U } from './util.js';
+import { CONFIG, DATA } from './data.js';
+import { AudioFX } from './audio.js';
+import { SVG } from './svg.js';
+import { TIMING, Battle } from './battle.js';
+
 /* ==========================================================
    UI 渲染器：DOM / 动画 / 引导 / 界面流转
    ========================================================== */
@@ -1863,3 +1869,5 @@ var UI = (function () {
 
   return UI;
 })();
+
+export { UI };

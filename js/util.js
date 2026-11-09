@@ -79,3 +79,5 @@ U.ease = {
   outCubic: function (t) { return 1 - Math.pow(1 - t, 3); },
   inCubic: function (t) { return t * t * t; }
 };
+
+export { U };
