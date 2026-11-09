@@ -7,7 +7,7 @@
 **立即开始**
 - **在线玩**：https://play.gemmae.dev/（Cloudflare Pages，构建产物）
 - **备用地址**：https://game1-4cf.pages.dev/
-- **GitHub Pages**：https://keavy-561.github.io/game1/（见下方部署说明，有已知限制）
+- **GitHub Pages**：https://keavy-561.github.io/game1/（见下方部署说明，现已可玩）
 
 ![标题屏](docs/title.png)
 
@@ -160,9 +160,9 @@ dist/
 - 输出目录：`dist`
 - 线上地址：https://play.gemmae.dev/（已验证 200，引用构建产物哈希文件），备用地址 https://game1-4cf.pages.dev/
 
-### GitHub Pages（已知限制）
+### GitHub Pages
 
-https://keavy-561.github.io/game1/ 同样可以打开，但它提供的是 `main` 分支根目录的**源码**，不是构建产物；且源码 `index.html` 用绝对路径引用 `/js/main.js`，在 `/game1/` 子路径下该脚本会 404（已实测），游戏无法启动。**当前请走 Cloudflare Pages 的构建产物链接。** 想让 GitHub Pages 也能玩，需要把入口脚本改成相对路径或改走 Actions 构建。
+https://keavy-561.github.io/game1/ 同样可以打开，它提供的是 `main` 分支根目录的**源码**，不是构建产物；入口脚本已改成相对路径（PR #4 已合并，线上实测标题屏、战斗准备、6×8 棋盘全正常），现已可玩。Cloudflare Pages 的构建产物链接（https://play.gemmae.dev/）仍是推荐主入口。
 
 ## 目录结构
 
