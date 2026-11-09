@@ -9,6 +9,8 @@ h1 { margin:0; font-size:22px; letter-spacing:4px; }
 #status { background:#FFFEF8; border:2px solid #E9DCC4; border-radius:14px; padding:14px 20px; max-width:580px; width:100%; white-space:pre-wrap; box-shadow:0 6px 18px rgba(120,96,60,.16); font-size:13px; line-height:1.7; }
 #dl { display:none; text-decoration:none; background:linear-gradient(135deg,#6DC087,#4E9E69); color:#fff; font-weight:900; padding:12px 30px; border-radius:999px; letter-spacing:2px; box-shadow:0 10px 26px rgba(78,158,105,.35); }
 #dl:hover { transform:translateY(-2px); }
+#dl-zip { display:none; text-decoration:none; background:linear-gradient(135deg,#F5B93F,#D89B22); color:#fff; font-weight:900; padding:12px 30px; border-radius:999px; letter-spacing:2px; box-shadow:0 10px 26px rgba(216,155,34,.4); }
+#dl-zip:hover { transform:translateY(-2px); }
 #saveas { display:none; border:none; cursor:pointer; background:linear-gradient(135deg,#F5B93F,#D89B22); color:#fff; font:900 16px inherit; font-family:inherit; padding:15px 38px; border-radius:999px; letter-spacing:1px; box-shadow:0 10px 26px rgba(216,155,34,.4); }
 #saveas:hover { transform:translateY(-2px); }
 #hint { font-size:12px; color:#97836F; max-width:580px; text-align:center; }
@@ -23,15 +25,23 @@ iframe { width:100%; height:100%; border:0; }
 <div id="status">正在读取源文件…</div>
 <button id="saveas">💾 保存到电脑（可选位置）</button>
 <a id="dl" download="POPBLOOM.html">⬇ 浏览器直接下载</a>
-<div id="frame-wrap"><iframe id="preview"></iframe></div>
+<a id="dl-zip" download="游戏本体-单文件版.zip">⬇ 提交用 ZIP（作品平台用）</a>
+  <div id="frame-wrap"><iframe id="preview"></iframe></div>
 <script>
 (async function () {
   var st = document.getElementById('status');
   var dl = document.getElementById('dl');
   st.textContent = '正在读取源文件…';
   try {
-    var css = await (await fetch('style.css')).text();
-    var html = await (await fetch('index.html')).text();
+    // 源文件可能被移动过：按候选路径依次尝试读取
+    async function pick(list) {
+      for (var pi = 0; pi < list.length; pi++) {
+        try { var pr = await fetch(list[pi]); if (pr.ok) return { t: await pr.text(), via: list[pi] }; } catch (e) {}
+      }
+      throw new Error('无法读取源文件: ' + list.join(' / '));
+    }
+    var css = (await pick(['style.css', 'js/style.css', '游戏本体/style.css'])).t;
+    var html = (await pick(['index.html', '游戏本体/index.html'])).t;
     var names = ['util', 'audio', 'svg', 'data', 'board', 'battle', 'ui', 'main'];
 
     // 内联 CSS
@@ -42,7 +52,7 @@ iframe { width:100%; height:100%; border:0; }
 
     // 内联 8 个 JS
     for (var i = 0; i < names.length; i++) {
-      var js = await (await fetch('js/' + names[i] + '.js')).text();
+      var js = (await pick(['js/' + names[i] + '.js', '游戏本体/js/' + names[i] + '.js'])).t;
       var tag = '<script src="js/' + names[i] + '.js"></' + 'script>';
       if (html.indexOf(tag) === -1) throw new Error('未找到脚本引用: js/' + names[i] + '.js');
       var risk = js.indexOf('</' + 'script') >= 0 ? '  [!] 内含闭合标签，需检查' : '';
@@ -84,6 +94,69 @@ iframe { width:100%; height:100%; border:0; }
 
     st.textContent += '\n✓ 打包完成：单文件共 ' + (blob.size / 1024).toFixed(1) + ' KB';
     st.textContent += '\n—— 点上面黄色按钮保存；预览窗口里就是单文件版实况 ——';
+
+    // 提交用 ZIP：内含唯一的自包含 index.html（零外部引用，作品平台直接渲染即可完整运行）
+    try {
+      var enc = new TextEncoder();
+      var crcT = null;
+      function crc32(u8) {
+        if (!crcT) {
+          crcT = [];
+          for (var cn = 0; cn < 256; cn++) { var cc = cn; for (var ck = 0; ck < 8; ck++) cc = (cc & 1) ? (0xEDB88320 ^ (cc >>> 1)) : (cc >>> 1); crcT[cn] = cc >>> 0; }
+        }
+        var c = 0xFFFFFFFF;
+        for (var ci = 0; ci < u8.length; ci++) c = crcT[(c ^ u8[ci]) & 0xFF] ^ (c >>> 8);
+        return (c ^ 0xFFFFFFFF) >>> 0;
+      }
+      function storedZip(files) {
+        var parts = [], central = [], off = 0;
+        for (var zf = 0; zf < files.length; zf++) {
+          var znm = enc.encode(files[zf].name), zdt = files[zf].u8, zcrc = crc32(zdt);
+          var lh = new DataView(new ArrayBuffer(30));
+          lh.setUint32(0, 0x04034b50, true);
+          lh.setUint16(4, 20, true);
+          lh.setUint16(6, 0x0800, true);
+          lh.setUint16(8, 0, true);
+          lh.setUint32(14, zcrc, true);
+          lh.setUint32(18, zdt.length, true);
+          lh.setUint32(22, zdt.length, true);
+          lh.setUint16(26, znm.length, true);
+          parts.push(new Uint8Array(lh.buffer), znm, zdt);
+          central.push({ nm: znm, crc: zcrc, size: zdt.length, off: off });
+          off += 30 + znm.length + zdt.length;
+        }
+        var cdStart = off, cdSize = 0;
+        for (var zc = 0; zc < central.length; zc++) {
+          var ze = central[zc];
+          var ch = new DataView(new ArrayBuffer(46));
+          ch.setUint32(0, 0x02014b50, true);
+          ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+          ch.setUint16(8, 0x0800, true);
+          ch.setUint32(16, ze.crc, true);
+          ch.setUint32(20, ze.size, true); ch.setUint32(24, ze.size, true);
+          ch.setUint16(28, ze.nm.length, true);
+          ch.setUint32(42, ze.off, true);
+          parts.push(new Uint8Array(ch.buffer), ze.nm);
+          cdSize += 46 + ze.nm.length;
+        }
+        var eo = new DataView(new ArrayBuffer(22));
+        eo.setUint32(0, 0x06054b50, true);
+        eo.setUint16(8, central.length, true);
+        eo.setUint16(10, central.length, true);
+        eo.setUint32(12, cdSize, true);
+        eo.setUint32(16, cdStart, true);
+        parts.push(new Uint8Array(eo.buffer));
+        return new Blob(parts, { type: 'application/zip' });
+      }
+      var zipBlob = storedZip([{ name: 'index.html', u8: enc.encode(html) }]);
+      window.__zipBlob = zipBlob;
+      var zdl = document.getElementById('dl-zip');
+      zdl.href = URL.createObjectURL(zipBlob);
+      zdl.style.display = 'inline-block';
+      st.textContent += '\n✓ 提交用 ZIP 已生成: 游戏本体-单文件版.zip（' + (zipBlob.size / 1024).toFixed(1) + ' KB，内含自包含 index.html）';
+    } catch (e) {
+      st.textContent += '\n[!] ZIP 生成失败: ' + String(e).slice(0, 100);
+    }
 
     // 验证 iframe 里的游戏确实跑起来了
     frame.addEventListener('load', function () {
