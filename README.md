@@ -12,10 +12,12 @@
 </div>
 <br/>
 
+
 [🎮 开始游戏](https://play.gemmae.dev/)（Cloudflare Pages，构建产物）
 [🎈 备用地址](https://game1-4cf.pages.dev/)
 [📖 玩法介绍](#-核心玩法)　
 [⚙️ 技术架构](#-技术栈)
+
 
 <br/>
 
@@ -23,6 +25,7 @@
 ![Vite](https://img.shields.io/badge/Vite-7.0-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Game](https://img.shields.io/badge/Genre-Match--3%20RPG-EA8A9B?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Web-83A88C?style=flat-square)
+
 </div>
 
 ---
