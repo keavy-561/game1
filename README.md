@@ -1,15 +1,21 @@
-# POPBLOOM · 三消远征
+<div align="center">
+![标题屏](docs/title.png)
+# 🌸 POPBLOOM
 
-> 消除即是攻击。带上五位英雄，穿过六片花海，把 60 关的怪物一只只打回去。
+### 三消远征 · Match. Battle. Bloom.
+
+**消除即是攻击，每一次交换都是一场冒险。**
+
+穿越六片奇幻花海，集结五位英雄，
+用策略与元素之力，开启 60 关的远征之旅。
 
 一款零安装、打开即玩的三消 RPG：6×8 棋盘上交换棋子，三连消除化作伤害；五位英雄各有技能，怪物分波登场，还有祝福、封印与特殊棋子——每一关都得动点脑子。
+<br/>
 
-**立即开始**
-- **在线玩**：https://play.gemmae.dev/（Cloudflare Pages，构建产物）
-- **备用地址**：https://game1-4cf.pages.dev/
-- **GitHub Pages**：https://keavy-561.github.io/game1/（见下方部署说明，现已可玩）
-
-![标题屏](docs/title.png)
+[🎮 开始游戏](https://play.gemmae.dev/)（Cloudflare Pages，构建产物）
+[🎈 备用地址](https://game1-4cf.pages.dev/)
+[📖 玩法介绍](#-核心玩法)　
+[⚙️ 技术架构](#-技术栈)
 
 ## 玩法一览
 
