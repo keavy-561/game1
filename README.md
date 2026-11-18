@@ -1,13 +1,15 @@
 ![标题屏](docs/title.png)
 <div align="center">
-### 🌸 POPBLOOM
-### 三消远征 · Match. Battle. Bloom.
+<h1>
+  🌸 POPBLOOM
+</h1>
 
-**消除即是攻击，每一次交换都是一场冒险。**
+<p><strong>三消远征 · Match. Battle. Bloom.</strong></p>
 
-穿越六片奇幻花海，集结五位英雄，
-用策略与元素之力，开启 60 关的远征之旅。
+<p>穿越六片奇幻花海，集结五位英雄，<br>
+用策略与元素之力，开启 60 关的远征之旅。</p>
 
+</div>
 <br/>
 
 [🎮 开始游戏](https://play.gemmae.dev/)（Cloudflare Pages，构建产物）
@@ -265,7 +267,7 @@ https://keavy-561.github.io/game1/
 该地址提供的是 `main` 分支根目录下的源码版本，而不是 Cloudflare Pages 构建后的生产产物。项目入口脚本已适配相对路径，可直接运行。
 
 **推荐优先使用 Cloudflare Pages 版本**，以获得基于构建产物的线上游戏体验。
-
+```
 
 
 ## 📁 目录结构
