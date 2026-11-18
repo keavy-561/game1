@@ -154,7 +154,6 @@ POPBLOOM 是一款融合三消玩法与 RPG 战斗机制的网页游戏。
 <img src="docs/title-mobile.png" alt="POPBLOOM 手机标题屏" width="300">
 
 *移动端标题界面展示*
-![远征地图](docs/title-mobile.png)
 
 </div>
 
@@ -243,19 +242,30 @@ dist/
 
 ```
 
-## 部署
 
-### Cloudflare Pages（推荐，当前线上版本）
+## 🌐 部署
 
-项目已接 GitHub：推送到 `main` 分支即自动构建部署。
+### Cloudflare Pages（推荐）
 
-- 构建命令：`npm run build`
-- 输出目录：`dist`
-- 线上地址：https://play.gemmae.dev/（已验证 200，引用构建产物哈希文件），备用地址 https://game1-4cf.pages.dev/
+项目已连接 GitHub，向 `main` 分支推送代码后即可自动触发构建和部署。
+
+| 配置项 | 内容 |
+|:---|:---|
+| 构建命令 | `npm run build` |
+| 输出目录 | `dist` |
+| 主访问地址 | https://play.gemmae.dev/ |
+| 备用地址 | https://game1-4cf.pages.dev/ |
 
 ### GitHub Pages
 
-https://keavy-561.github.io/game1/ 同样可以打开，它提供的是 `main` 分支根目录的**源码**，不是构建产物；入口脚本已改成相对路径（PR #4 已合并，线上实测标题屏、战斗准备、6×8 棋盘全正常），现已可玩。Cloudflare Pages 的构建产物链接（https://play.gemmae.dev/）仍是推荐主入口。
+项目也支持通过 GitHub Pages 访问：
+
+https://keavy-561.github.io/game1/
+
+该地址提供的是 `main` 分支根目录下的源码版本，而不是 Cloudflare Pages 构建后的生产产物。项目入口脚本已适配相对路径，可直接运行。
+
+**推荐优先使用 Cloudflare Pages 版本**，以获得基于构建产物的线上游戏体验。
+
 
 
 ## 📁 目录结构
